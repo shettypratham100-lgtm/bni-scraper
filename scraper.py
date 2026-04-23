@@ -47,10 +47,19 @@ def run_bni_scraper(BASE_URL, OUTPUT_FILE):
 
     options = Options()
 
-    # 🔥 IMPORTANT FOR CLOUD (HEADLESS MODE)
+    #  🔥 IMPORTANT FOR CLOUD (HEADLESS MODE)
+    # options.add_argument("--headless=new")
+    # options.add_argument("--no-sandbox")
+    # options.add_argument("--disable-dev-shm-usage")
+    # options.add_argument("--window-size=1920,1080")
+
+    # Required for Railway (cloud)
     options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")
+    
+    # Optional
     options.add_argument("--window-size=1920,1080")
 
     driver = webdriver.Chrome(
