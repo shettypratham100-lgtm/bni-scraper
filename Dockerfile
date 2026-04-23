@@ -1,15 +1,29 @@
-FROM python:3.10
+FROM python:3.10-slim
 
-# Install Chrome
+# Install dependencies
 RUN apt-get update && apt-get install -y \
     wget \
     unzip \
     curl \
     gnupg \
-    && wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list \
-    && apt-get update \
-    && apt-get install -y google-chrome-stable
+    ca-certificates \
+    fonts-liberation \
+    libnss3 \
+    libxss1 \
+    libasound2 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    xdg-utils \
+    --no-install-recommends
+
+# Install Google Chrome (NEW METHOD)
+RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb \
+    && apt-get install -y ./google-chrome-stable_current_amd64.deb \
+    && rm google-chrome-stable_current_amd64.deb
 
 # Set working directory
 WORKDIR /app
@@ -17,8 +31,8 @@ WORKDIR /app
 # Copy files
 COPY . .
 
-# Install Python packages
-RUN pip install -r requirements.txt
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Run app
+# Start app
 CMD ["python", "app.py"]
