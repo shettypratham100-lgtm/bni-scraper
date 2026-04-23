@@ -75,7 +75,10 @@ def run_bni_scraper(BASE_URL, OUTPUT_FILE):
     # ==========================
     driver.get(BASE_URL)
 
-    wait.until(EC.presence_of_element_located((By.XPATH, "//table")))
+    # Wait for chapter links to load
+    wait.until(EC.presence_of_all_elements_located(
+        (By.XPATH, "//a[contains(@href,'chapterdetail')]")
+    ))
 
 
     # ==========================
