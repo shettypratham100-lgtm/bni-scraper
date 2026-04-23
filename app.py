@@ -2,20 +2,22 @@ from flask import Flask, request, send_file
 from scraper import run_bni_scraper
 import os
 app = Flask(__name__)
-
 @app.route("/scrape")
 def scrape():
     link = request.args.get("link")
     filename = request.args.get("filename")
 
-    # ✅ Validate inputs
+    # Validate inputs
     if not link or not filename:
         return "Error: Missing link or filename", 400
 
     try:
         file_path = run_bni_scraper(link, filename + ".xlsx")
 
-        # ✅ Check if file exists
+        # 🔥 FIX HERE
+        if not file_path:
+            return "Error: No data found (0 chapters)", 400
+
         if not os.path.exists(file_path):
             return "Error: File not generated", 500
 
