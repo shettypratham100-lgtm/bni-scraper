@@ -2,12 +2,10 @@
 # IMPORT LIBRARIES
 # ==========================
 
-# ❌ Removed anvil imports (not needed in cloud)
-
-import time                  # Used to add delays (important for Selenium stability)
-import random                # Used to randomize delay (avoid bot detection)
-import pandas as pd          # Used for storing and saving data to Excel
-import os                    # Used for file handling (check if file exists)
+import time
+import random
+import pandas as pd
+import os
 
 # Selenium (browser automation)
 from selenium import webdriver
@@ -29,7 +27,6 @@ def run_bni_scraper(BASE_URL, OUTPUT_FILE):
     # ==========================
     # RESUME SYSTEM
     # ==========================
-
     try:
         existing_df = pd.read_excel(OUTPUT_FILE)
         collected_links = set(existing_df["Profile Link"].tolist())
@@ -44,22 +41,13 @@ def run_bni_scraper(BASE_URL, OUTPUT_FILE):
     # ==========================
     # SETUP SELENIUM BROWSER
     # ==========================
-
     options = Options()
 
-    #  🔥 IMPORTANT FOR CLOUD (HEADLESS MODE)
-    # options.add_argument("--headless=new")
-    # options.add_argument("--no-sandbox")
-    # options.add_argument("--disable-dev-shm-usage")
-    # options.add_argument("--window-size=1920,1080")
-
-    # Required for Railway (cloud)
+    # ✅ REQUIRED FOR CLOUD (Railway)
     options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
-    
-    # Optional
     options.add_argument("--window-size=1920,1080")
 
     driver = webdriver.Chrome(
@@ -67,24 +55,28 @@ def run_bni_scraper(BASE_URL, OUTPUT_FILE):
         options=options
     )
 
-    wait = WebDriverWait(driver, 15)
-
+    wait = WebDriverWait(driver, 20)
 
     # ==========================
     # LOAD MAIN PAGE
     # ==========================
     driver.get(BASE_URL)
 
-    # Wait for chapter links to load
-    wait.until(EC.presence_of_all_elements_located(
-        (By.XPATH, "//a[contains(@href,'chapterdetail')]")
-    ))
-
+    # 🔥 IMPORTANT FIX → FORCE PAGE LOAD (JS content)
+    time.sleep(5)
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    time.sleep(5)
 
     # ==========================
     # GET ALL CHAPTER LINKS
     # ==========================
     elements = driver.find_elements(By.XPATH, "//a[contains(@href,'chapterdetail')]")
+
+    # Retry if not loaded
+    if len(elements) == 0:
+        print("⚠️ No chapters found, retrying...")
+        time.sleep(5)
+        elements = driver.find_elements(By.XPATH, "//a[contains(@href,'chapterdetail')]")
 
     chapter_links = []
     seen = set()
@@ -96,6 +88,12 @@ def run_bni_scraper(BASE_URL, OUTPUT_FILE):
             chapter_links.append(link)
 
     print(f"📊 Total Chapters Found: {len(chapter_links)}")
+
+    # ❌ If still 0 → stop early (avoid empty file)
+    if len(chapter_links) == 0:
+        driver.quit()
+        print("❌ No chapters found. Exiting.")
+        return None
 
 
     # ==========================
@@ -151,7 +149,7 @@ def run_bni_scraper(BASE_URL, OUTPUT_FILE):
         print(f"\n📘 Processing Chapter {idx+1}/{len(chapter_links)}")
 
         driver.get(chapter_url)
-        time.sleep(random.uniform(2, 3))
+        time.sleep(3)
 
         try:
             chapter_name = driver.find_element(By.TAG_NAME, "h1").text
@@ -172,10 +170,6 @@ def run_bni_scraper(BASE_URL, OUTPUT_FILE):
 
         print(f"👥 Members Found: {len(members)}")
 
-
-        # ==========================
-        # LOOP MEMBERS
-        # ==========================
         for i in range(len(members)):
 
             try:
